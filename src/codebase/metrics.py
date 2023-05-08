@@ -1,6 +1,7 @@
 import numpy as np
 
 eps = 1e-8
+Fairness_notion == "DP"
 
 def pos(Y):
     return np.sum(np.round(Y)).astype(np.float32)
@@ -31,6 +32,9 @@ def FP_soft(Y, Ypred):
 
 def FN_soft(Y, Ypred):
     return np.sum(np.multiply(Y, 1 - Ypred)).astype(np.float32)
+
+def AR(Y, Ypred):
+    return pos(Ypred) / Y.shape[0]
 
 def TPR(Y, Ypred):
     return TP(Y, Ypred) / pos(Y)
@@ -74,6 +78,11 @@ def DI_FP(Y, Ypred, A):
     fpr0 = subgroup(FPR, 1 - A, Y, Ypred)
     return abs(fpr1 - fpr0)
 
+def DI_AR(Y, Ypred, A):
+    ar1 = subgroup(AR, A, Y, Ypred)
+    ar0 = subgroup(AR, 1 - A, Y, Ypred)
+    return abs(ar1 - ar0)
+
 def DI_FN(Y, Ypred, A):
     fnr1 = subgroup(FNR, A, Y, Ypred)
     fnr0 = subgroup(FNR, 1 - A, Y, Ypred)
@@ -90,7 +99,12 @@ def DI_FN_soft(Y, Ypred, A):
     return abs(fnr1 - fnr0)
 
 def DI(Y, Ypred, A):
-    return (DI_FN(Y, Ypred, A) + DI_FP(Y, Ypred, A)) * 0.5
+    if Fairness_notion == "DP":
+        return DI_AR(Y, Ypred, A)
+    elif Fairness_notion == "EO":
+        return DI_FN(Y, Ypred, A)
+    elif Fairness_notion == "EOs":
+        return (DI_FN(Y, Ypred, A) + DI_FP(Y, Ypred, A)) * 0.5
 
 def DI_soft(Y, Ypred, A):
     return (DI_FN_soft(Y, Ypred, A) + DI_FP_soft(Y, Ypred, A)) * 0.5
