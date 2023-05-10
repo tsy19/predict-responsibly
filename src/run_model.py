@@ -21,6 +21,7 @@ parser.add_argument('-mrs', '--model_random_seed', help='what random seed to use
 parser.add_argument('-drs', '--data_random_seed', help='what random seed to use for data', default=0, type=int)
 parser.add_argument('-dm', '--dm_type', help='type of DM to use: inconsistent/biased/highacc', default='inconsistent')
 parser.add_argument('-dirs', '--dirconf', help='config file for dirs', default='conf/dirs/home.json')
+parser.add_argument('-fn', '--fairness_notion', default='DP',  type=str)
 args = vars(parser.parse_args())
 
 #load options
@@ -53,7 +54,7 @@ with tf.Session() as sess:
 
     #create Trainer
     trainer = Trainer(model, data, sess=sess, logs_path=logdirname, \
-                 checkpoint_path=ckptdirname, results_path=resdirname)
+                 checkpoint_path=ckptdirname, results_path=resdirname, Fairness_notion=args["fairness_notion"])
 
     save_path = trainer.train(n_epochs=args['num_epochs'], patience=args['patience'])
     trainer.restore(save_path)

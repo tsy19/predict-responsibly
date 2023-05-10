@@ -4,3 +4,8 @@
 tfboard_logs/*
 test_figs/*
 *.vim
+
+/res/
+/ad_hoc_logs/
+
+*.tar.gz

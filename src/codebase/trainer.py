@@ -10,7 +10,7 @@ LOG_PATH = './tfboard_logs'
 
 class Trainer(object):
     def __init__(self, model, data, batch_size=BATCH_SIZE, learning_rate=LEARNING_RATE, sess=None, logs_path=LOG_PATH, \
-                 checkpoint_path=None, results_path=None):
+                 checkpoint_path=None, results_path=None, Fairness_notion="DP"):
         self.data = data
         if not self.data.loaded:
             self.data.load()
@@ -40,9 +40,10 @@ class Trainer(object):
         self.tensors = {'Y_hat': self.model.Y_hat, 'idk': self.model.idks, 'A': self.model.A, 'Y': self.model.Y,
                    'class_loss': self.model.class_loss, 'Y_DM': self.model.Y_DM,
                    'Yt': self.model.Y_ttl}
-        self.metrics = {'errRate': lambda T: errRate(T['Y'], T['Y_hat']), 'DI': lambda T: DI(T['Y'], T['Y_hat'], T['A']), \
+        
+        self.metrics = {'errRate': lambda T: errRate(T['Y'], T['Y_hat']), 'DI': lambda T: DI(T['Y'], T['Y_hat'], T['A'], Fairness_notion=Fairness_notion), \
                    'errRate-T': lambda T: errRate(T['Y'], T['Yt']),
-                   'DI-T': lambda T: DI(T['Y'], T['Yt'], T['A']),
+                   'DI-T': lambda T: DI(T['Y'], T['Yt'], T['A'], Fairness_notion=Fairness_notion),
                    'rejErrRate': lambda T: rejErrRate(T['Y'], T['Y_hat'], T['idk']),
                    'IDKRate': lambda T: PR(T['idk'])}
 

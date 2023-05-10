@@ -1,7 +1,7 @@
 import numpy as np
 
 eps = 1e-8
-Fairness_notion == "DP"
+Fairness_notion = "DP"
 
 def pos(Y):
     return np.sum(np.round(Y)).astype(np.float32)
@@ -98,7 +98,7 @@ def DI_FN_soft(Y, Ypred, A):
     fnr0 = subgroup(FNR_soft, 1 - A, Y, Ypred)
     return abs(fnr1 - fnr0)
 
-def DI(Y, Ypred, A):
+def DI(Y, Ypred, A, Fairness_notion="DP"):
     if Fairness_notion == "DP":
         return DI_AR(Y, Ypred, A)
     elif Fairness_notion == "EO":
