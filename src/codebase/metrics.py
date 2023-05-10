@@ -1,7 +1,7 @@
 import numpy as np
 
 eps = 1e-8
-Fairness_notion = "DP"
+# Fairness_notion = "DP"
 
 def pos(Y):
     return np.sum(np.round(Y)).astype(np.float32)

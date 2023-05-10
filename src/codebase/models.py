@@ -16,6 +16,7 @@ Y2DIM = 1
 
 class AbstractBaseNet(ABC):
     def __init__(self,
+                 fairness_notion="DP",
                  class_coeff=CLASS_COEFF,
                  fair_coeff=FAIR_COEFF,
                  xdim=XDIM,
@@ -68,6 +69,7 @@ class BinaryMLP(AbstractBaseNet):
                  adim=ADIM,
                  hidden_layer_specs=HIDDEN_LAYER_SPECS,
                  seed=SEED,
+                 fairness_notion=None,
                  **kwargs):
 
         super().__init__(class_coeff, fair_coeff, xdim, ydim, adim, hidden_layer_specs, seed=seed)
@@ -81,6 +83,7 @@ class BinaryMLP(AbstractBaseNet):
         self.loss_class = self._get_class_loss()
         self.loss_idk = tf.zeros_like(self.loss_class)
         self.Y_ttl = self.Y_hat
+        self.fairness_notion = fairness_notion
 
     def _define_vars(self):
         self.X = tf.placeholder("float", [None, self.xdim], name='X')
@@ -122,6 +125,7 @@ class IDKModel(AbstractBaseNet):
                  hidden_layer_specs=HIDDEN_LAYER_SPECS,
                  seed=SEED,
                  pass_coeff=PASS_COEFF,
+                 fairness_notion=None,
                  **kwargs):
 
         super().__init__(class_coeff, fair_coeff, xdim, ydim, adim, hidden_layer_specs, seed=seed)
@@ -134,6 +138,7 @@ class IDKModel(AbstractBaseNet):
         self.idk_loss = self._get_idk_loss()
         self.loss = self._get_loss()
         self.Y_ttl = hard_switch(self.Y_hat, self.Y_DM, self.idks)
+        self.fairness_notion = fairness_notion
 
     @abstractmethod
     def _get_idks(self): #weight class loss for final loss function
@@ -169,7 +174,7 @@ class MLPRejectModel(IDKModel):
         return ce
 
     def _get_fairness_regularizer(self):
-        return di_regularizer(self.Y, self.A, self.Y_hat)
+        return di_regularizer(self.Y, self.A, self.Y_hat, self.fairness_notion)
 
     def _get_idks(self, scope_name='model/preds'):
 
@@ -194,6 +199,7 @@ class MLPRejectModel(IDKModel):
                 + self.fair_coeff * self.fair_reg
 
 class MLPDeferModel(MLPRejectModel):
+
     def _get_class_loss(self):
         CE_model = tf.expand_dims(cross_entropy(self.Y, self.Y_hat), 1)
         CE_DM = tf.expand_dims(cross_entropy(self.Y, self.Y_DM), 1)
@@ -215,7 +221,7 @@ class MLPDeferModel(MLPRejectModel):
         temperature = 0.5
         gumbel_idks = gumbel_binary_sample(self.idks, temperature)
         sampled_Y  = switch(self.Y_hat, self.Y_DM, gumbel_idks)
-        di_reg = di_regularizer(self.Y, self.A, sampled_Y)
+        di_reg = di_regularizer(self.Y, self.A, sampled_Y, self.fairness_notion)
         return di_reg
 
 
@@ -223,16 +229,26 @@ def cross_entropy(target, pred, eps=EPS):
     l = -tf.squeeze(tf.multiply(target, tf.log(pred + eps)) + tf.multiply(1 - target, tf.log(1 - pred + eps)), axis=[1])
     return l
 
-def di_regularizer(Y, A, Y_hat):
+def di_regularizer(Y, A, Y_hat, fairness_notion):
     fpr0 = soft_rate(1 - Y, 1 - A, Y_hat)
     fpr1 = soft_rate(1 - Y, A, Y_hat)
     fnr0 = soft_rate(Y, 1 - A, Y_hat)
     fnr1 = soft_rate(Y, A, Y_hat)
 
-    fpdi = tf.abs(fpr0 - fpr1)
-    fndi = tf.abs(fnr0 - fnr1)
 
-    di = 0.5 * (fpdi + fndi)
+    if fairness_notion == "DP":
+        ar0 = tf.reduce_sum(tf.multiply(Y_hat, 1 - A)) / tf.reduce_sum(1 - A + EPS)
+        ar1 = tf.reduce_sum(tf.multiply(Y_hat, A)) / tf.reduce_sum(A + EPS)
+        di = tf.abs(ar0 - ar1)
+
+    elif fairness_notion == "EO":
+        di = tf.abs(fnr0 - fnr1)
+
+    else:
+        fpdi = tf.abs(fpr0 - fpr1)
+        fndi = tf.abs(fnr0 - fnr1)
+        di = 0.5 * (fpdi + fndi)
+
     return di
 
 def soft_rate(ind1, ind2, pred): 
