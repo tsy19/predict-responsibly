@@ -16,7 +16,6 @@ Y2DIM = 1
 
 class AbstractBaseNet(ABC):
     def __init__(self,
-                 fairness_notion="DP",
                  class_coeff=CLASS_COEFF,
                  fair_coeff=FAIR_COEFF,
                  xdim=XDIM,
@@ -24,6 +23,7 @@ class AbstractBaseNet(ABC):
                  adim=ADIM,
                  hidden_layer_specs=HIDDEN_LAYER_SPECS,
                  seed=SEED,
+                 fairness_notion="DP",
                  **kwargs):
         self.class_coeff = class_coeff
         self.fair_coeff = fair_coeff
@@ -32,6 +32,7 @@ class AbstractBaseNet(ABC):
         self.adim = adim
         self.hidden_layer_specs = hidden_layer_specs
         self.seed = seed
+        self.fairness_notion = fairness_notion
         tf.set_random_seed(self.seed)
         self._define_vars()
 
@@ -69,7 +70,7 @@ class BinaryMLP(AbstractBaseNet):
                  adim=ADIM,
                  hidden_layer_specs=HIDDEN_LAYER_SPECS,
                  seed=SEED,
-                 fairness_notion=None,
+                 fairness_notion="DP",
                  **kwargs):
 
         super().__init__(class_coeff, fair_coeff, xdim, ydim, adim, hidden_layer_specs, seed=seed)
@@ -109,7 +110,7 @@ class BinaryMLP(AbstractBaseNet):
         return cross_entropy(self.Y, self.Y_hat)
 
     def _get_fairness_regularizer(self):
-        return di_regularizer(self.Y, self.A, self.Y_hat)
+        return di_regularizer(self.Y, self.A, self.Y_hat, self.fairness_notion)
 
     def _get_loss(self):
         return self.class_coeff * tf.reduce_mean(self.class_loss) + self.fair_coeff * self.fair_reg
@@ -125,10 +126,10 @@ class IDKModel(AbstractBaseNet):
                  hidden_layer_specs=HIDDEN_LAYER_SPECS,
                  seed=SEED,
                  pass_coeff=PASS_COEFF,
-                 fairness_notion=None,
+                 fairness_notion="DP",
                  **kwargs):
 
-        super().__init__(class_coeff, fair_coeff, xdim, ydim, adim, hidden_layer_specs, seed=seed)
+        super().__init__(class_coeff, fair_coeff, xdim, ydim, adim, hidden_layer_specs, seed=seed, fairness_notion=fairness_notion)
         self.pass_coeff = pass_coeff
         self.Y_hat_logits = self._get_class_logits()
         self.Y_hat = self._get_class_preds()
@@ -245,6 +246,7 @@ def di_regularizer(Y, A, Y_hat, fairness_notion):
         di = tf.abs(fnr0 - fnr1)
 
     else:
+        # "EO"?
         fpdi = tf.abs(fpr0 - fpr1)
         fndi = tf.abs(fnr0 - fnr1)
         di = 0.5 * (fpdi + fndi)

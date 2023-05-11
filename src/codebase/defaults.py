@@ -28,7 +28,7 @@ def get_default_kwargs(data_dir, opts, model_opts):
         ydim=1,
         xdim=model_opts['xdim'] + (1 if model_opts['use_attr'] else 0),
         hidden_layer_specs=model_opts['hidden_layer_specs'],
-        fairness_notion=opts['fn']  # Add the new attribute here
+        # fairness_notion=opts['fairness_notion']  # Add the new attribute here
     )
 
     return {**dataset_agnostic_data_kwargs, **dataset_kwargs}, model_kwargs
