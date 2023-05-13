@@ -1,0 +1,14 @@
+{
+    "name": "law",
+    "attr0_name": "",
+    "attr1_name": "",
+    "npzfiles": {"highbias": "law/law_DM_highbias.npz"},
+    "use_attr": true,
+    "adim": 1,
+    "ydim": 1,
+    "xdim": 14,
+    "hidden_layer_specs": {
+            "layer_sizes": [5],
+            "activ": "sigmoid"
+    }
+}

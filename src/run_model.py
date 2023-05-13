@@ -4,7 +4,7 @@ import json
 import sys
 from codebase.dataset import Dataset
 from codebase.models import *
-from codebase.trainer import Trainer, make_dir_if_not_exist
+from codebase.trainer import Trainer, New_Trainer, make_dir_if_not_exist
 from codebase.defaults import get_default_kwargs
 
 parser = argparse.ArgumentParser(description='Run model')
@@ -19,7 +19,9 @@ parser.add_argument('-pa', '--patience', help='training patience for early stopp
 parser.add_argument('-ua', '--use_attr', action='store_true', help='use sensitive attribute in data', default=True)
 parser.add_argument('-mrs', '--model_random_seed', help='what random seed to use for model', default=0, type=int)
 parser.add_argument('-drs', '--data_random_seed', help='what random seed to use for data', default=0, type=int)
-parser.add_argument('-dm', '--dm_type', help='type of DM to use: inconsistent/biased/highacc', default='inconsistent')
+
+parser.add_argument('-dm', '--dm_type', help='type of DM to use: inconsistent/biased/highacc', default='highbias')
+
 parser.add_argument('-dirs', '--dirconf', help='config file for dirs', default='conf/dirs/home.json')
 parser.add_argument('-fn', '--fairness_notion', default='DP',  type=str)
 args = vars(parser.parse_args())
@@ -53,8 +55,12 @@ with tf.Session() as sess:
         make_dir_if_not_exist(d)
 
     #create Trainer
-    trainer = Trainer(model, data, sess=sess, logs_path=logdirname, \
-                 checkpoint_path=ckptdirname, results_path=resdirname, Fairness_notion=args["fairness_notion"])
+
+    # trainer = Trainer(model, data, sess=sess, logs_path=logdirname, \
+    #              checkpoint_path=ckptdirname, results_path=resdirname, Fairness_notion=args["fairness_notion"])
+
+    trainer = New_Trainer(model, data, sess=sess, logs_path=logdirname, \
+                checkpoint_path=ckptdirname, results_path=resdirname, Fairness_notion=args["fairness_notion"])
 
     save_path = trainer.train(n_epochs=args['num_epochs'], patience=args['patience'])
     trainer.restore(save_path)

@@ -1,0 +1,14 @@
+{
+    "name": "adult",
+    "attr0_name": "",
+    "attr1_name": "",
+    "npzfiles": {"highbias": "adult/adult_DM_highbias.npz"},
+    "use_attr": true,
+    "adim": 1,
+    "ydim": 1,
+    "xdim": 105,
+    "hidden_layer_specs": {
+            "layer_sizes": [20],
+            "activ": "sigmoid"
+    }
+}

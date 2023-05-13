@@ -1,5 +1,0 @@
-{
-"exp": "./res/experiments",
-"log": "./res/tfboard_logs",
-"data": "data"
-}

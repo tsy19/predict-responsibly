@@ -67,6 +67,12 @@ class Trainer(object):
         T = {t: None for t in tensors}
         self.batches_seen = 0
         for x, y, a, y_dm in epoch_iter:
+        # for batch_data in epoch_iter:
+            # if len(batch_data) == 3:
+            #     x, y, a = batch_data
+            #     y_dm = None
+            # elif len(batch_data) == 4:
+            #     x, y, a, y_dm = batch_data
             self.batches_seen += 1
             feed_dict = {self.model.X: x, self.model.Y: y, self.model.A: a, self.model.epoch: np.array([epoch]), self.model.Y_DM: y_dm}
             loss_dict, tensor_dict = self.process_minibatch(phase, feed_dict, losses, tensors)
@@ -175,6 +181,58 @@ class Trainer(object):
         #save output tensors of interest as npz files
         for k in D:
             fname = os.path.join(self.results_path, '{}.npz'.format(k))
+            np.savez(fname, X=D[k])
+        print('Tensors saved to {}'.format(self.results_path))
+
+class New_Trainer(Trainer):
+    
+    def test(self):
+        losses = self.losses
+        tensors = self.tensors
+        metrics = self.metrics
+
+        #run model on test set
+        test_L, test_T = self.process_epoch('test', losses, tensors, 1000)
+        test_metrics = self.get_metrics(test_T, metrics)
+        test_res_str = self.create_res_str(None, test_L, test_metrics)
+
+        #print to command line
+        msg = 'Test: {}'.format(test_res_str)
+        print(msg)
+
+        #save results and tensors
+        self.save_results(test_L, test_metrics, mode="test")
+        self.save_tensors(test_T, mode="test")
+
+        # set epoch = 1000, the same as test
+        train_L, train_T = self.process_epoch('train', losses, tensors, 1000)
+        train_metrics = self.get_metrics(train_T, metrics)
+        train_res_str = self.create_res_str(None, train_L, train_metrics)
+
+        msg = 'Train: {}'.format(test_res_str)
+        print(msg)
+
+        self.save_results(train_L, train_metrics, mode="train")
+        self.save_tensors(train_T, mode="train")
+
+        return
+
+    def save_results(self, test_L, test_M, mode="train"):
+        #record losses and metrics of interest on test set to a csv file
+        testcsvname = os.path.join(self.results_path, mode + '_results.csv')
+        testcsv = open(testcsvname, 'w')
+        # D is a dictionary of metrics: string to float
+        for D in [test_L, test_M]:
+            for k in D:
+                s = '{},{:.7f}\n'.format(k, D[k])
+                testcsv.write(s)
+        testcsv.close()
+        print('Metrics saved to {}'.format(testcsvname))
+
+    def save_tensors(self, D, mode="train"):
+        #save output tensors of interest as npz files
+        for k in D:
+            fname = os.path.join(self.results_path, mode + '{}.npz'.format(k))
             np.savez(fname, X=D[k])
         print('Tensors saved to {}'.format(self.results_path))
 

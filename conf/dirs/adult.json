@@ -1,0 +1,5 @@
+{
+"exp": "./res_adult/05_13_2023/experiments",
+"log": "./res_adult/05_13_2023/tfboard_logs",
+"data": "data"
+}

@@ -5,7 +5,13 @@ tfboard_logs/*
 test_figs/*
 *.vim
 
-/res/
+/res_adult
+/res
+/res_law
+/res_compas
+
+
 /ad_hoc_logs/
 
 *.tar.gz
+*.zip
